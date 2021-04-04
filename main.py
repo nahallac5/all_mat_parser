@@ -131,7 +131,7 @@ def TextRead(path, file):
     if comStart == 0:
         del cleanList[comStart[0]:comEnd[0]+1]
     # Returns cleaned list
-    print(cleanList)
+    #print(cleanList)
     return cleanList
 
 
