@@ -12,13 +12,43 @@ import ast
 # ============== #
 
 # Gets path to starting files
-path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
-file = "\AlGaSb_Alp4.in"
+#path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
+path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
+#file = "\AlGaSb_Alp4.in"
+file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
 
 
 # ============== #
 # Functions
 # ============== #
+
+# ************** #
+# headerIterator(input, itrVars)
+# ************** #
+# Handles multiple instances of the same header
+# JSON needs unqiue headers
+def headerIterator(input, itrVars):
+    # Probably could be more condesed...
+    # Material
+    if input == "Material":
+        output = "Material_" + str(itrVars["Material"])
+        itrVars["Material"] = itrVars["Material"] + 1
+    # Domain
+    elif input == "Domain":
+        output = "Domain_" + str(itrVars["Domain"])
+        itrVars["Domain"] = itrVars["Domain"] + 1
+    # Region
+    elif input == "Region":
+        output = "Region_" + str(itrVars["Region"])
+        itrVars["Region"] = itrVars["Region"] + 1
+    # solver
+    elif input == "solver":
+        output = "solver_" + str(itrVars["solver"])
+        itrVars["solver"] = itrVars["solver"] + 1
+    # everything else
+    else:
+        output = input
+    return output, itrVars
 
 # ************** #
 # TextRead(path, file)
@@ -34,22 +64,74 @@ def TextRead(path, file):
     cleanList = []
     # Remove all commentted out data lines and remove extranious white space
     termVars = "//"
-    # Set up solver incrimenting
-    solveInc = 0
+    # Set up header incrimenting
+    itrDict = {"Material": 0, "Domain": 0, "Region": 0, "solver": 0}
+
+    # Lets send the loop
     for index in range(len(fList)):
-        # Fixes solver repeition issues (json cant have the same term in the same layer)
-        if fList[index][0].strip() == "solver":
-            cleanList.append("solver_" + str(solveInc))
-            solveInc = solveInc + 1
+
+        # Fixes { and } on the same line
+        if "{" in fList[index][0].strip() and "}" in fList[index][0].strip():
+            cleanList.append("{")
+            if not "/*" in fList[index][0].strip():
+                input = fList[index][0].strip()[1:len(fList[index][0].strip())-1]
+                output, itrDict = headerIterator(input, itrDict)
+                cleanList.append(output)
+            cleanList.append("}")
+
+        # Fixes { bracket issues
+        # Checks to see if there is a { in a line with other text
+        elif len(fList[index][0].strip()) > 1 and "{" in fList[index][0].strip():
+            # Checks if starts or ends with {
+            if fList[index][0].strip().startswith("{"):
+                cleanList.append("{")
+                commentCheck = fList[index][0].strip()[1:]
+                if not commentCheck.strip().startswith("//"):
+                    input = commentCheck
+                    output, itrDict = headerIterator(input, itrDict)
+                    cleanList.append(output)
+            else:
+                commentCheck = fList[index][0].strip()[:len(fList[index][0].strip())-1]
+                if not commentCheck.strip().startswith("//"):
+                    input = commentCheck
+                    output, itrDict = headerIterator(input, itrDict)
+                    cleanList.append(output)
+                cleanList.append("{")
+
+        # Fixes } bracket issues
+        elif len(fList[index][0].strip()) > 1 and "}" in fList[index][0].strip():
+            # Checks if starts or ends with }
+            if fList[index][0].strip().startswith("}"):
+                cleanList.append("}")
+                commentCheck = fList[index][0].strip()[1:]
+                if not commentCheck.strip().startswith("//"):
+                    input = commentCheck
+                    output, itrDict = headerIterator(input, itrDict)
+                    cleanList.append(output)
+            else:
+                commentCheck = fList[index][0].strip()[:len(fList[index][0].strip())-1]
+                if not commentCheck.strip().startswith("//"):
+                    input = commentCheck
+                    output, itrDict = headerIterator(input, itrDict)
+                    cleanList.append(output)
+                cleanList.append("}")
+
         # Checks for empty lines or commented lines
-        elif not (fList[index][0].strip().startswith(termVars) | len(fList[index][0].strip()) == 0):
-            # Strips extra whitespace from inside of list
-            cleanList.append(re.sub(" +", " ", fList[index][0].strip()))
+        elif not fList[index][0].strip().startswith(termVars) and len(fList[index][0].strip()) != 0:
+            # Removes lines that look like '/* TEXT */'
+            if not (fList[index][0].strip().startswith("/*") and fList[index][0].strip().endswith("*/")):
+                # Strips extra whitespace from inside of list
+                input = re.sub(" +", " ", fList[index][0].strip())
+                output, itrDict = headerIterator(input, itrDict)
+                cleanList.append(output)
+
     # Remove comments from first few lines
     comStart = [i for i, item in enumerate(cleanList) if item.startswith('/*')]
     comEnd = [i for i, item in enumerate(cleanList) if item.startswith('*/')]
-    del cleanList[comStart[0]:comEnd[0]+1]
+    if comStart == 0:
+        del cleanList[comStart[0]:comEnd[0]+1]
     # Returns cleaned list
+    print(cleanList)
     return cleanList
 
 
@@ -208,6 +290,35 @@ def backGrab(varList, fullDataList):
                         layerLevel = layerLevel + 1
                         indexLevel = indexLevel + 1
 
+                # Layer level five handling
+                elif layerLevel == 6:
+                    # Sets leveel zero call so that it can be retrived later
+                    levelSixVar = varList[indexLevel]
+                    # If data is present, get it
+                    if varList[indexLevel + 2] == "}":
+                        dataDict[levelZeroVar][levelOneVar][levelTwoVar][levelThreeVar][levelFourVar][levelFiveVar][levelSixVar] = {"Data": dataGrab(levelFiveVar, fullDataList)}
+                        indexLevel = indexLevel + 1
+                    # More layers under it
+                    else:
+                        dataDict[levelZeroVar][levelOneVar][levelTwoVar][levelThreeVar][levelFourVar][levelFiveVar][levelSixVar] = {}
+                        # Bump index level and layer level
+                        layerLevel = layerLevel + 1
+                        indexLevel = indexLevel + 1
+
+                # Layer level five handling
+                elif layerLevel == 7:
+                    # Sets leveel zero call so that it can be retrived later
+                    levelSevenVar = varList[indexLevel]
+                    # If data is present, get it
+                    if varList[indexLevel + 2] == "}":
+                        dataDict[levelZeroVar][levelOneVar][levelTwoVar][levelThreeVar][levelFourVar][levelFiveVar][levelSixVar][levelSevenVar] = {"Data": dataGrab(levelFiveVar, fullDataList)}
+                        indexLevel = indexLevel + 1
+                    # More layers under it
+                    else:
+                        dataDict[levelZeroVar][levelOneVar][levelTwoVar][levelThreeVar][levelFourVar][levelFiveVar][levelSixVar][levelSevenVar] = {}
+                        # Bump index level and layer level
+                        layerLevel = layerLevel + 1
+                        indexLevel = indexLevel + 1
                 # Error Condition
                 else:
                     print("Figure out how to use recursion you fool...")
@@ -243,13 +354,13 @@ def assembleDicts(inList):
 # ************** #
 # Uses the produced dictionary to output a json file
 def exportJson(outDict, path, file):
-    #json_object = json.dumps(outDict, indent = 2)
-    #print(json_object)
+    json_object = json.dumps(outDict, indent = 2)
+    print(json_object)
     newFile = file.split(".")[0]
     with open(path + newFile + ".json", "w") as outFile:
         json.dump(outDict, outFile)
     print("JSON Created")
-6
+
 
 # ============== #
 # Run Program
