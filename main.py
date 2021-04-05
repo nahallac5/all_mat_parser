@@ -5,6 +5,7 @@
 import re
 import json
 import ast
+import sys
 
 
 # ============== #
@@ -13,9 +14,11 @@ import ast
 
 # Gets path to starting files
 #path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
-path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
+#path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
+path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\YodaAlGaSbExample"
 #file = "\AlGaSb_Alp4.in"
-file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
+#file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
+file = "\\all_fullsort_AlGaSb.mat"
 
 
 # ============== #
@@ -57,9 +60,15 @@ def headerIterator(input, itrVars):
 # Path variable used so that we can modify later
 def TextRead(path, file):
     f = open(path + file, "r")
-    fList = [line.split('\n') for line in f.readlines()]
+    commentList = [line.split('\n') for line in f.readlines()]
     #print(fList)
-        
+    # Cleaning out * lines...
+    fList = []
+    for index in range(len(commentList)):
+        if not commentList[index][0].strip().startswith("*"):
+            if not commentList[index][0].strip().startswith("/"):
+                if not commentList[index][0].strip().startswith("#"):
+                    fList.append(commentList[index])
     # Cleaning up List
     cleanList = []
     # Remove all commentted out data lines and remove extranious white space
@@ -153,12 +162,19 @@ def dataGrab(currVar, fullDataList):
     # Loop over dataList
     for index in range(len(dataList)):
         # Split at equals sign
-        lineSplit = dataList[index].split("=")
-        lineSplit[0] = lineSplit[0].strip()
-        lineSplit[1] = lineSplit[1].strip()
-        # Append to dict
-        outDict[lineSplit[0]] = lineSplit[1]
-
+        if "=" in dataList[index]:
+            lineSplit = dataList[index].split("=")
+            lineSplit[0] = lineSplit[0].strip()
+            lineSplit[1] = lineSplit[1].strip()
+            # Append to dict
+            outDict[lineSplit[0]] = lineSplit[1]
+        else:
+            print("use rep recrustion")
+            # *** Why does it get killed here? ***
+            # This gets hit with multiline "*" comments...
+            # ex. ['crystal_def = "zb";', 'luttinger_gamma1 = 13.38;', 'luttinger_gamma2 = 4.24;', 'luttinger_gamma3 = 5.69;', 'Pcv = 100;', 'Ev = 0;', 'Eg = 0.67;', 'SO_Coupling = 0.29;', 'Ch_eff_mass = 1.0;', 'ac = 0;', 'av = 1.5;//1.5;//-1.24;//4.2;', 'b = -3;//-4.2;//-2.9;//4.2;', 'd = 0;//-5.3;//.7;', 'kx = 0.0;', 'ky = 0.0;', 'kz = 0.0;', 'E = 0.0;', 'band_ind = 14.0;', 'group Misc ', '{', 'bandmodel = 6.0;', 'nparam = 18;', 'Ec_ind = 12;', 'Ehh_ind = 10;', 'Elh_ind = 8;']
+            # Can fix by looping over whole file and instantly killing these lines...
+            #outDict["comment"] = dataList[index]
     # Returns list split of equals lines
     return outDict
 
