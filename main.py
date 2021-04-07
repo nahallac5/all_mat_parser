@@ -15,12 +15,165 @@ import sys
 # Gets path to starting files
 #path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
 #path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
-path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\YodaAlGaSbExample"
+#path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\YodaAlGaSbExample"
+path = "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study"
 #file = "\AlGaSb_Alp4.in"
 #file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
-file = "\\all_fullsort_AlGaSb.mat"
+#file = "\\all_fullsort_AlGaSb.mat"
+file = "\\all_fullsort_AlGaSb_Hegde.mat"
+
+"""
+Alright, lets try and figure this out
+How to recursivly dig into json list
+
+Curly count attempt:
+1. Start on top level
+2. Count every { once it hits, and count every } once its hit
+3. Once they are even, you have completed loop
+** How do we get levels?
+** List maybe?
+ex. 
+    a. fcb hit
+    b. [0]
+    c. fcb hit
+    d. [0,1]
+    e. bcb hit
+    f. [0,1]
+    g. fcb hit
+    h. [0,1,1]
+    i. fcb hit
+    j. fcb hit
+    k. [0,1,1,2]
+    l. bcb hit
+    m. [0,1,1,2]
+
+What do we need to run this?
+~Level dict
+    {0: "0l name", 1: "1l name", 2: "2l name", etc.}
+    This will let us keep the names of the levels and allow easy writes
+~Curr Level
+    currLevel = 0
+    Lets us know what level you are on
+    fcb will incriment this
+    bcb will deincriment this
+
+    currLevelVar = lastLevel[currLevelKey]
+    Alows easy cycling of dict levels
+    lastLevel is actual the previous address, may be super nested
+
+How do we handle lines that are the "data areas"?
+    if not cb, check if it has = sign in it 
+    *** This is an assumption, we may just get screwed by this ***
+    if it has equal sign, split and ship boys
+
+We need to first format and clean the loop
+    We dont want any comments anywhere
+    We want curly brackets to be on their own levels
+    blank lines are the devil
+    This seems like it maybe be a ineffeicnt idea but idk should be fine
+
+Lets make a dumby loop
+This should save like 100 lines and yikes
+AKA Liam pretends to know recursion
+Goals, loops over an addition function depending on scenarious
+
+# Hey kids we have a new level
+def noEqual():
+    currLevel
+    dict[currLevel] = {}
+
+# Data time
+def yesEqual():
+    split string at equals
+    dict[string[0]] = string[1]   
+
+# Looooooop
+while exit != True:
+
+OK LETS BUILD THIS BOI
+1. Rebuild the cleaning function
+"""
 
 
+# Opening function
+# Saves to list
+def TextRead(path, file):
+    f = open(path + file, "r")
+    return [line.split('\n') for line in f.readlines()]
+    
+
+# Clean list
+# Kills: comments, blank space
+# seperates cb into seperate lines
+def ListClean(dirtyList):
+    # Makes the cleanList for output
+    cleanList = []
+    
+    # Set up some vars
+    # Initial deletes (first check, easiest to find)
+    initClean = ("*", "/", "#")
+    # Inline comment indicator
+    inlineClean = "//"
+    
+    # Loop over list
+    for index in range(len(dirtyList)):
+        # Strip current level down to string and remove white space
+        currLine = dirtyList[index][0].strip()
+        
+        # Checks line against inital deletes or just whitespace
+        # This will eventually just skip lines that hit these conditions
+        if not (currLine.startswith(initClean) or len(currLine) == 0):
+            
+            # Now we remove inline comments. Looks like "//"
+            # Weird small loop, will resave curr line if a inline comment is found
+            if not currLine.find(inlineClean) == -1:
+                # Gets location of start of inline
+                inLineLoc = currLine.find(inlineClean)
+                # Removes inline and restrips
+                currLine = currLine[:inLineLoc].strip()
+
+            # Ok, so now we can deal with fcb and bcb
+            # Four condtions, both are in here, fcb only, or bcb only, else i guess
+            # Fixes { and } on the same line
+            if "{" in currLine and "}" in currLine:
+                cleanList.append("{")
+                # Get output via removing cb and stripping it
+                fcbLoc = currLine.find("{")
+                bcbLoc = currLine.find("}")
+                cleanList.append(currLine[fcbLoc:bcbLoc].strip())
+                cleanList.append("}")
+            # Fixes just { inline, must have len > 1
+            elif "{" in currLine and len(currLine) > 1:
+                # Check location of {
+                if currLine.startswith("{"):
+                    cleanList.append("{")
+                    cleanList.append(currLine[1:].strip())
+                else:
+                    cleanList.append(currLine[:-1].strip())
+                    cleanList.append("{")
+            # Fixes just } inLine, must have len > 1
+            elif "}" in currLine and len(currLine) > 1:
+                # Check loaction of }
+                if currLine.endswith("}"):
+                    cleanList.append(currLine[:-1].strip())
+                    cleanList.append("}")
+                else:
+                    cleanList.append("}")
+                    cleanList.append(currLine[1:].strip())
+            # Wow, the line is acually correctly formatted
+            else:
+                cleanList.append(currLine)
+
+    # Returns cleanList
+    print(cleanList)
+    return cleanList
+
+
+# Ok lets run this 
+fileIn = TextRead(path, file)
+cleanFile = ListClean(fileIn)
+
+"""
 # ============== #
 # Functions
 # ============== #
@@ -385,3 +538,5 @@ def exportJson(outDict, path, file):
 data = TextRead(path, file)
 dataDict = assembleDicts(data)
 exportJson(dataDict, path, file)
+
+"""
