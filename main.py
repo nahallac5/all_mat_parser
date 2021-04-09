@@ -15,11 +15,11 @@ import sys
 # Gets path to starting files
 #path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
 #path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
-path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\YodaAlGaSbExample"
+path = "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study\\problemdata"
 #path = "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study"
 #file = "\AlGaSb_Alp4.in"
 #file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
-file = "\\all_fullsort_AlGaSb.mat"
+file = "\\all_fullsort_GaInAs_HSE06.mat"
 #file = "\\all_fullsort_AlGaSb_Hegde.mat"
 
 
@@ -98,8 +98,18 @@ def ListClean(dirtyList):
                 # Some data lines are split between two lines so thats super sad
                 # if line begins with rule, try and check it
                 if not currLine.find("=") == -1 and not currLine.endswith(";"):
-                    currLine = currLine + " " + dirtyList[index + 2][0].strip()
-                    dirtyList[index + 2][0] = ""
+                    # Dealing with an arbitary depth between these lines
+                    lineFind = 1
+                    # Loop until next non-blank line is found
+                    while not lineFind == -1:
+                        # Found the next line
+                        if not len(dirtyList[index + lineFind][0].strip()) == 0:
+                            currLine = currLine + " " + dirtyList[index + lineFind][0].strip()
+                            dirtyList[index + lineFind][0] = ""
+                            break
+                        # Itterates to next line if needed
+                        else:
+                            lineFind = lineFind + 1
                 cleanList.append(currLine)
 
     # Adds a termination symbol at end of list
