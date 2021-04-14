@@ -1,6 +1,6 @@
-# ============== #
+#############################
 # Libraries
-# ============== #
+#############################
 
 import re
 import json
@@ -8,19 +8,15 @@ import ast
 import sys
 
 
-# ============== #
-# Gloabal Vars
-# ============== #
+#############################
+# Global Vars
+#############################
 
-# Gets path to starting files
-#path = "E:\Docs Storage\School\Classes\Spring 2021\ind study"
-#path = "C:\\Users\\liamc\\Documents\\School\\Class Files\\Spring 2021\\Independent Study\\json_conversion"
-path = "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study\\problemdata"
-#path = "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study"
-#file = "\AlGaSb_Alp4.in"
-#file = "\\InGaAsEsaki5_HSE06VCA_sp3d5sstar_SO_noKpointsSym.in"
-file = "\\all_fullsort_GaInAs_HSE06.mat"
-#file = "\\all_fullsort_AlGaSb_Hegde.mat"
+globalVars = {
+    "path": "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study\\problemdata",
+    "file_mat": "\\all_fullsort_GaInAs_HSE06.mat",
+    "file_json": "\\all_fullsort_GaInAs_HSE06.json"
+}
 
 
 # Opening function
@@ -28,7 +24,15 @@ file = "\\all_fullsort_GaInAs_HSE06.mat"
 def TextRead(path, file):
     f = open(path + file, "r")
     return [line.split('\n') for line in f.readlines()]
-    
+
+#############################
+# READ IN TO JSON
+#############################
+# TextRead()
+# |_> ListClean()
+#   |_> ListToString()
+#     |_> ExportJson()
+#############################
 
 # Clean list
 # Kills: comments, blank space
@@ -195,17 +199,99 @@ def ListToString(cleanList):
 
 # Uses the produced dictionary to output a json file
 def exportJson(outString, path, file):
-    #json_object = json.dumps(outString, indent = 4)
-    #print(json_object)
     newFile = file.split(".")[0]
     with open(path + newFile + ".json", "w") as outFile:
         outFile.write(outString)
         #json.dump(outString, outFile)
-    print("JSON Created")
+    print("JSON Created\n")
 
 
-# Ok lets run this 
-fileIn = TextRead(path, file)
-cleanFile = ListClean(fileIn)
-outString = ListToString(cleanFile)
-exportJson(outString, path, file)
+#############################
+# READ OUT TO ALL.MAT
+#############################
+# TextRead()
+# |_> JsonToString()
+#   |_> ExportMat() 
+#############################
+
+# Convert input list into all.mat string
+def JsonToString(jsonRaw):
+    # Start mat out string
+    matOutString = ""
+
+    # Parse over JSON incase multiple lines
+    for index in range(len(jsonRaw)):
+        # Grabs current line for ease
+        currLine = jsonRaw[index][0]
+        
+        # 1. Change all : after a " to a =
+        currLine = re.sub('"\s?:\s?"', '" = "', currLine)
+
+        # 2. Change all ", to a ";\n
+        currLine = re.sub('"\s?,\s?', '";\n', currLine)
+
+        # 3. Change all '": {' to ' {\n'
+        currLine = re.sub('"\s?:\s?{', '" {\n', currLine)
+
+        # 4. Change all '"},' to '";\n}\n'
+        currLine = re.sub('"\s?}\s?,', '";\n}\n', currLine)
+
+        # 5. Remove all " marks
+        currLine = re.sub('"', '', currLine)
+
+        # Append to string
+        matOutString = matOutString + currLine
+
+    # Returns formatted string
+    return matOutString[1:-1]
+
+
+# Uses the produced string to output a mat file
+def ExportMat(outString, path, file):
+    newFile = file.split(".")[0]
+    with open(path + newFile + "_new.mat", "w") as outFile:
+        outFile.write(outString)
+        #json.dump(outString, outFile)
+    print("mat Created\n")
+
+
+#############################
+# EXECUTE
+#############################
+# ProgramExec()
+#############################
+
+# Exectuion function
+def ProgramExec(globalVars):
+    print("================================\n")
+    print("Welcome to JSON<->MAT converter!\n")
+    print("Version 1.0 - LJC\n")
+    print("================================\n")
+    print("Would you like to:\n")
+    print("1. Convert Mat -> JSON\n")
+    print("2. Convert JSON -> Mat\n")
+    # Selects exec type
+    execType = input("Input (1 or 2): ")
+    print(execType)
+
+    # Execute selected path
+
+    # Execute Mat -> JSON
+    if execType == "1":
+        fileIn = TextRead(globalVars["path"], globalVars["file_mat"])
+        cleanFile = ListClean(fileIn)
+        outString = ListToString(cleanFile)
+        exportJson(outString, globalVars["path"], globalVars["file_mat"])
+    
+    # Execute JSON -> Mat
+    elif execType == "2":
+        fileIn = TextRead(globalVars["path"], globalVars["file_json"])
+        outString = JsonToString(fileIn)
+        ExportMat(outString, globalVars["path"], globalVars["file_json"])
+
+    # System error
+    else: 
+        print("Invalid entry...\nRestarting...\n\n")
+
+
+ProgramExec(globalVars)
