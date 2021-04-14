@@ -3,10 +3,6 @@
 #############################
 
 import re
-import json
-import ast
-import sys
-
 
 #############################
 # Global Vars
@@ -192,8 +188,6 @@ def ListToString(cleanList):
     
     # Returns completed json formated outstring
     outString = outString + "}"
-    #outString = ast.literal_eval(outString)
-    #print(outString)
     return outString
 
 
@@ -202,7 +196,6 @@ def exportJson(outString, path, file):
     newFile = file.split(".")[0]
     with open(path + newFile + ".json", "w") as outFile:
         outFile.write(outString)
-        #json.dump(outString, outFile)
     print("JSON Created\n")
 
 
@@ -223,6 +216,15 @@ def JsonToString(jsonRaw):
     for index in range(len(jsonRaw)):
         # Grabs current line for ease
         currLine = jsonRaw[index][0]
+        
+        # Soo Regex...
+        # \s calls out a whitespace
+        # ? is 0 or more of previous call
+        # thr4 \s? is 0 or more spaces
+        # \s? used to make sure json is read no matter if it is put through a converter or not
+
+        # Also, result is not tabulated so... readbality is not great
+        # Should still work though
         
         # 1. Change all : after a " to a =
         currLine = re.sub('"\s?:\s?"', '" = "', currLine)
@@ -251,7 +253,6 @@ def ExportMat(outString, path, file):
     newFile = file.split(".")[0]
     with open(path + newFile + "_new.mat", "w") as outFile:
         outFile.write(outString)
-        #json.dump(outString, outFile)
     print("mat Created\n")
 
 
