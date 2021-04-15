@@ -10,10 +10,12 @@ import re
 # Global Vars
 #############################
 
+# Replace the dict var with an actual dict if using your code
 globalVars = {
     "path": "E:\\Docs Storage\\School\\Classes\\Spring 2021\\ind study\\problemdata",
     "file_mat": "\\all_fullsort_GaInAs_HSE06.mat",
-    "file_json": "\\all_fullsort_GaInAs_HSE06.json"
+    "file_json": "\\all_fullsort_GaInAs_HSE06.json",
+    "dict": {1: "testing", 2: "testing again", 3: "still testing"}
 }
 
 
@@ -273,8 +275,9 @@ def ProgramExec(globalVars):
     print("Would you like to:\n")
     print("1. Convert Mat -> JSON\n")
     print("2. Convert JSON -> Mat\n")
+    print("3. Convert Dict -> Mat\n")
     # Selects exec type
-    execType = input("Input (1 or 2): ")
+    execType = input("Input (1, 2, or 3): ")
     print(execType)
 
     # Execute selected path
@@ -290,6 +293,14 @@ def ProgramExec(globalVars):
     elif execType == "2":
         fileIn = TextRead(globalVars["path"], globalVars["file_json"])
         outString = JsonToString(fileIn)
+        ExportMat(outString, globalVars["path"], globalVars["file_json"])
+
+    # Execute Dict -> Mat
+    # Need to feed in dict, mainly a tester function for you
+    elif execType == "3":
+        # Feed in Dict
+        dictIn = str(globalVars["Dict"])
+        outString = JsonToString(dictIn)
         ExportMat(outString, globalVars["path"], globalVars["file_json"])
 
     # System error
